@@ -5,23 +5,27 @@
  */
 
 interface Options {
-    attrs?: object
-    children?: Array<vNode | string>
+    attrs?: Record<string, string>
+    children?: Child[]
 }
 
 interface vNode {
     tagName: string
-    attrs: object
-    children: Array<vNode | string>
+    attrs: Record<string, string>
+    children: Child[]
 }
 
-export const createElement = (tagName: string, { attrs = {}, children = [] }: Options): vNode => ({
+type Child = vNode | string
+
+type PatchFunction = ($node: HTMLElement | Text) => HTMLElement | Text | undefined;
+
+export const createElement = (tagName: string, attrs = {}, ...children: Child[]): vNode => ({
     tagName,
     attrs,
     children,
 })
 
-export const render = (vNode: vNode | string): HTMLElement | Text => {
+export const render = (vNode: Child): HTMLElement | Text => {
     if (typeof vNode === 'string') {
         return document.createTextNode(vNode)
     }
@@ -46,7 +50,7 @@ export const mount = ($node: HTMLElement | Text, $target: HTMLElement): HTMLElem
     return $node
 }
 
-const diffAttrs = (oldAttrs: object, newAttrs: object): Function => {
+const diffAttrs = (oldAttrs: Record<string, string>, newAttrs: Record<string, string>): PatchFunction => {
     const patches: Array<Function> = []
 
     // Set new attributes
@@ -67,14 +71,15 @@ const diffAttrs = (oldAttrs: object, newAttrs: object): Function => {
         }
     }
 
-    return ($node: Node) => {
+    return ($node: HTMLElement | Text) => {
         for (const patch of patches) {
             patch($node)
         }
+        return $node;
     }
 }
 
-const diffChildren = (oldVChildren: Array<any>, newVChildren: Array<any>): Function => {
+const diffChildren = (oldVChildren: Child[], newVChildren: Child[]): PatchFunction => {
     const childPatches: Array<Function> = []
     oldVChildren.forEach((oldVChild, i) => {
         childPatches.push(diff(oldVChild, newVChildren[i]))
@@ -82,13 +87,13 @@ const diffChildren = (oldVChildren: Array<any>, newVChildren: Array<any>): Funct
 
     const additionalPatches: Array<Function> = []
     for (const additionalVChild of newVChildren.slice(oldVChildren.length)) {
-        additionalPatches.push(($node: Node) => {
+        additionalPatches.push(($node: HTMLElement) => {
             $node.appendChild(render(additionalVChild))
             return $node
         })
     }
 
-    return ($parent: Node) => {
+    return ($parent: HTMLElement | Text) => {
         const childNodes = Array.from($parent.childNodes); // Convert NodeListOf<ChildNode> to an array
         for (const [patch, $child] of zip(childPatches, childNodes)) {
             patch($child)
@@ -102,17 +107,17 @@ const diffChildren = (oldVChildren: Array<any>, newVChildren: Array<any>): Funct
     }
 }
 
-const zip = (xs: Array<any>, ys: Array<any>): Array<Array<any>> => {
-    const zipped: Array<Array<any>> = []
+const zip = <T, U>(xs: T[], ys: U[]): Array<[T, U]> => {
+    const zipped: Array<[T, U]> = []
     for (let i = 0; i < Math.min(xs.length, ys.length); i++) {
         zipped.push([xs[i], ys[i]])
     }
     return zipped
 }
 
-export const diff = (vOldNode: vNode, vNewNode: vNode): Function => {
+export const diff = (vOldNode: vNode | string, vNewNode: vNode | string): PatchFunction => {
     if (vNewNode === undefined) {
-        return ($node: HTMLElement) => {
+        return ($node: HTMLElement | Text) => {
             $node.remove()
             return undefined
         }
@@ -120,18 +125,18 @@ export const diff = (vOldNode: vNode, vNewNode: vNode): Function => {
 
     if (typeof vOldNode === 'string' || typeof vNewNode === 'string') {
         if (vOldNode !== vNewNode) {
-            return ($node: HTMLElement) => {
+            return ($node: HTMLElement | Text) => {
                 const $newNode = render(vNewNode)
                 $node.replaceWith($newNode)
                 return $newNode
             }
         } else {
-            return ($node: Node) => undefined
+            return ($node: HTMLElement | Text) => $node
         }
     }
 
     if (vOldNode.tagName !== vNewNode.tagName) {
-        return ($node: HTMLElement) => {
+        return ($node: HTMLElement | Text) => {
             const $newNode = render(vNewNode)
             $node.replaceWith($newNode)
             return $newNode
@@ -141,7 +146,7 @@ export const diff = (vOldNode: vNode, vNewNode: vNode): Function => {
     const patchAttrs = diffAttrs(vOldNode.attrs, vNewNode.attrs)
     const patchChildren = diffChildren(vOldNode.children, vNewNode.children)
 
-    return ($node: Node) => {
+    return ($node: HTMLElement | Text) => {
         patchAttrs($node)
         patchChildren($node)
         return $node
