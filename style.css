@@ -1,0 +1,73 @@
+/* Change default font to a code-friendly font */
+:root {
+    font-family: "Courier New", Courier, monospace;
+    color-scheme: dark;
+}
+
+/* Make the default style a very dark blue, with purple accents */
+body {
+    background-color: #00000f;
+    color: #ffffff;
+}
+
+#app {
+    /* Make it a flexbox */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+}
+
+input {
+    /* Make the background slightly transparent */
+    background-color: rgba(255, 255, 255, 0.1);
+
+    /* Make it bigger */
+    padding: 0.5rem;
+    padding-top: 1.5rem;
+
+    /* Remove the border and make it rounder in rem */
+    border: none;
+    border-radius: 0.5rem;
+}
+
+/* The form-input regroups an input with a lable
+   Like this:
+    <div class="form-input">
+        <input type="text" id="name" />
+        <label for="name">Name</label>
+    </div>
+*/
+.form-input {
+    font-size: 1.1em;
+    margin: 0.5rem 0;
+
+    input {
+        font-size: inherit;
+    }
+
+    /* Move the label's position inside the input's box at the top left */
+    position: relative;
+
+    /* Make the label's text transparent */
+    label {
+        font-size: inherit;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Make the label's position absolute, so it doesn't take space in the flow */
+    label {
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+    }
+
+}
+
+/* Make the label's text smaller when the input is in focus or has a value */
+.form-input input:focus+label,
+.form-input input:not(:placeholder-shown):valid+label {
+    /* Add your styles here */
+    font-size: 0.7em;
+}
