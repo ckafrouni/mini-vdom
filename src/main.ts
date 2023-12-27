@@ -1,6 +1,10 @@
 import { mount, diff, createElement, render } from './lib/vdom.js'
 
-const createVApp = ({ count }) => {
+interface Props {
+    count: number
+}
+
+const createVApp = ({ count }: Props) => {
     return createElement('div', {
         attrs: {
             id: 'app',
@@ -73,7 +77,7 @@ let count = 0
 let vApp = createVApp({ count })
 const $app = render(vApp)
 
-let $rootEl = mount($app, document.getElementById('app'))
+let $rootEl = mount($app, document.getElementById('app') as HTMLElement)
 
 setInterval(() => {
     count++
