@@ -4,11 +4,17 @@ interface Props {
     count: number
 }
 
-const createVApp = ({ count }: Props) =>
-    createElement(
+const createVApp = ({ count }: Props) => {
+    let _count = count
+    
+    setInterval(() => {
+        _count++
+    }, 1000)
+
+    return () => createElement(
         'div',
-        { id: 'container', 'data-count': count },
-        createElement('h1', undefined, 'Hello World - ', createElement('span', { id: 'count' }, String(count))),
+        { id: 'container', 'data-count': _count },
+        createElement('h1', undefined, 'Hello World - ', createElement('span', { id: 'count' }, String(_count))),
         createElement(
             'form',
             undefined,
@@ -26,18 +32,17 @@ const createVApp = ({ count }: Props) =>
             alt: 'Gif of "I love you" sign'
         })
     )
+}
 
-
-let count = 0
-let vApp = createVApp({ count })
-const $app = render(vApp)
-
+let vAppFct = createVApp({ count: 0 })
+let vApp = vAppFct()
 const appElement = document.getElementById('app') as HTMLElement;
-let $rootEl = mount($app, appElement);
+const app = render(vApp)
+// Mount the app
+let $rootEl = mount(app, appElement)
 
 setInterval(() => {
-    count++
-    const vNewApp = createVApp({ count })
+    const vNewApp = vAppFct()
     const patch = diff(vApp, vNewApp)
 
     // Check if the patch does not return undefined
@@ -47,4 +52,5 @@ setInterval(() => {
     }
 
     vApp = vNewApp
+
 }, 1000)
